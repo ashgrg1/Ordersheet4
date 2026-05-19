@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Foodservice Analytics Dashboard - Professional Intelligence Platform</title>
+    
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Premium Color Palette */
+            --primary: #0F3460;
+            --secondary: #E94560;
+            --accent: #16213E;
+            --success: #2EC4B6;
+            --warning: #FF6B6B;
+            --danger: #C92A2A;
+            --neutral-50: #F8F9FA;
+            --neutral-100: #E9ECEF;
+            --neutral-200: #DEE2E6;
+            --neutral-400: #ADB5BD;
+            --neutral-600: #495057;
+            --neutral-800: #212529;
+            --neutral-900: #111317;
+            
+            /* Typography */
+            --font-display: 'Playfair Display', serif;
+            --font-mono: 'Space Mono', monospace;
+            --font-body: 'Inter', sans-serif;
+            
+            /* Spacing */
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 16px;
+            --space-lg: 24px;
+            --space-xl: 32px;
+            --space-2xl: 48px;
+            
+            /* Shadows */
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
+            --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.15);
+            --shadow-xl: 0 20px 48px rgba(0, 0, 0, 0.2);
+            
+            /* Transitions */
+            --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-base: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: linear-gradient(135deg, #0F3460 0%, #16213E 50%, #1a1a2e 100%);
+            color: var(--neutral-800);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(233, 69, 96, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(46, 196, 182, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(15, 52, 96, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+            animation: gradientShift 15s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.05); }
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: var(--space-lg);
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Header Styling */
+        .header {
+            margin-bottom: var(--space-2xl);
+            padding-bottom: var(--space-xl);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header h1 {
+            font-family: var(--font-display);
+            font-size: 2.5rem;
+            color: white;
+            margin-bottom: var(--space-sm);
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.95rem;
+            font-weight: 300;
+        }
+
+        /* Control Section */
+        .control-section {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: var(--space-lg);
+            margin-bottom: var(--space-xl);
+            backdrop-filter: blur(10px);
+        }
+
+        .control-group {
+            margin-bottom: var(--space-lg);
+        }
+
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-label {
+            display: block;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: var(--space-md);
+        }
+
+        .button-group {
+            display: flex;
+            gap: var(--space-md);
+            flex-wrap: wrap;
+        }
+
+        .control-btn, .category-btn {
+            padding: 10px 20px;
+            border: 1.5px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            white-space: nowrap;
+        }
+
+        .control-btn:hover, .category-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .control-btn.active, .category-btn.active {
+            background: var(--secondary);
+            border-color: var(--secondary);
+            color: white;
+            box-shadow: 0 8px 24px rgba(233, 69, 96, 0.3);
+        }
+
+        /* KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: var(--space-lg);
+            margin-bottom: var(--space-2xl);
+        }
+
+        .kpi-card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: var(--space-lg);
+            backdrop-filter: blur(10px);
+            transition: all var(--transition-base);
+        }
+
+        .kpi-card:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: var(--secondary);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .kpi-card-label {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: var(--space-sm);
+        }
+
+        .kpi-card-value {
+            color: white;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: var(--space-xs);
+            font-family: var(--font-mono);
+        }
+
+        .kpi-card-change {
+            font-size: 0.8rem;
+            color: var(--success);
+            font-weight: 500;
+        }
+
+        .kpi-card-change.negative {
+            color: var(--warning);
+        }
+
+        /* Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: var(--space-lg);
+            margin-bottom: var(--space-2xl);
+        }
+
+        .chart-card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: var(--space-lg);
+            backdrop-filter: blur(10px);
+            height: 400px;
+        }
+
+        .chart-card h3 {
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: var(--space-lg);
+        }
+
+        .chart-container {
+            height: 100%;
+            position: relative;
+            padding-bottom: 40px;
+        }
+
+        /* Table Styling */
+        .table-section {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: var(--space-lg);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+
+        .table-section h3 {
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: var(--space-lg);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            color: var(--neutral-800);
+        }
+
+        thead {
+            background: rgba(15, 52, 96, 0.3);
+        }
+
+        th {
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.03);
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        tbody tr:hover {
+            background: rgba(233, 69, 96, 0.1);
+            transition: background var(--transition-fast);
+        }
+
+        .table-rank {
+            display: inline-block;
+            background: var(--secondary);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .table-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .badge-success {
+            background: rgba(46, 196, 182, 0.2);
+            color: var(--success);
+        }
+
+        .badge-warning {
+            background: rgba(255, 107, 107, 0.2);
+            color: var(--warning);
+        }
+
+        .badge-danger {
+            background: rgba(201, 42, 42, 0.2);
+            color: var(--danger);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: var(--space-md);
+            }
+
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                gap: var(--space-sm);
+            }
+
+            .control-btn, .category-btn {
+                padding: 8px 16px;
+                font-size: 0.85rem;
+            }
+        }
+
+        /* Animation */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .insight-card {
+            animation: slideIn 0.5s ease-out;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📊 Foodservice Analytics</h1>
+            <p>Real-time performance intelligence for data-driven decisions</p>
+        </div>
+
+        <!-- Control Section -->
+        <div class="control-section">
+            <!-- Month Filter -->
+            <div class="control-group">
+                <label class="control-label">📅 Select Month</label>
+                <div class="button-group">
+                    <button class="control-btn active" onclick="filterByMonth('January')">January</button>
+                    <button class="control-btn" onclick="filterByMonth('February')">February</button>
+                    <button class="control-btn" onclick="filterByMonth('March')">March</button>
+                </div>
+            </div>
+
+            <!-- Category Filter -->
+            <div class="control-group">
+                <label class="control-label">🏷️ Product Category</label>
+                <div class="button-group">
+                    <button class="category-btn active" onclick="filterByCategory('all')">All Categories</button>
+                    <button class="category-btn" onclick="filterByCategory('breakfast')">Breakfast</button>
+                    <button class="category-btn" onclick="filterByCategory('mexican')">Mexican</button>
+                    <button class="category-btn" onclick="filterByCategory('snacks')">Snacks</button>
+                    <button class="category-btn" onclick="filterByCategory('sandwiches')">Sandwiches</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="kpi-grid">
+            <div class="kpi-card insight-card">
+                <div class="kpi-card-label">Total Revenue</div>
+                <div class="kpi-card-value" id="totalRevenue">$0</div>
+                <div class="kpi-card-change" id="revenueChange">↑ 0%</div>
+            </div>
+
+            <div class="kpi-card insight-card" style="animation-delay: 0.1s">
+                <div class="kpi-card-label">Total Units Sold</div>
+                <div class="kpi-card-value" id="totalUnits">0</div>
+                <div class="kpi-card-change" id="unitsChange">↑ 0%</div>
+            </div>
+
+            <div class="kpi-card insight-card" style="animation-delay: 0.2s">
+                <div class="kpi-card-label">Total Transactions</div>
+                <div class="kpi-card-value" id="totalTransactions">0</div>
+                <div class="kpi-card-change" id="transactionsChange">↑ 0%</div>
+            </div>
+
+            <div class="kpi-card insight-card" style="animation-delay: 0.3s">
+                <div class="kpi-card-label">Avg Transaction Value</div>
+                <div class="kpi-card-value" id="avgValue">$0</div>
+                <div class="kpi-card-change" id="valueChange">↑ 0%</div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>Monthly Revenue Trend</h3>
+                <div class="chart-container">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3>Product Category Distribution</h3>
+                <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3>Revenue vs Units Sold</h3>
+                <div class="chart-container">
+                    <canvas id="correlationChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3>Top Products Distribution</h3>
+                <div class="chart-container">
+                    <canvas id="distributionChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products Table -->
+        <div class="table-section">
+            <h3>📋 Top Products Performance</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Product Name</th>
+                        <th>Category</th>
+                        <th>Product ID</th>
+                        <th>Revenue</th>
+                        <th>Units Sold</th>
+                        <th>Avg Price</th>
+                        <th>% of Total</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Dynamically populated -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // =====================================================
+        // ENHANCED DATA WITH CATEGORIES
+        // =====================================================
+        const allProductsData = {
+            January: {
+                revenue: 34722.30,
+                units: 9273,
+                transactions: 73,
+                products: [
+                    { rank: 1, name: 'Beef Bean Red Chili Burrito', id: 50166, revenue: 14303.02, units: 5147, avgPrice: 2.78, pct: 11.2, category: 'mexican' },
+                    { rank: 2, name: 'Chicken Cheese Flautas', id: 50199, revenue: 9856.15, units: 2488, avgPrice: 3.96, pct: 7.7, category: 'mexican' },
+                    { rank: 3, name: 'Beef Chimichanga', id: 50167, revenue: 5203.63, units: 1328, avgPrice: 3.92, pct: 4.1, category: 'mexican' },
+                    { rank: 4, name: 'Saus Egg Cheese Croissant', id: 50203, revenue: 4669.51, units: 951, avgPrice: 4.91, pct: 3.7, category: 'breakfast' },
+                    { rank: 5, name: 'Honestly Chicken Bites', id: 50171, revenue: 4293.95, units: 825, avgPrice: 5.21, pct: 3.4, category: 'snacks' },
+                    { rank: 6, name: 'Spicy Chicken Bites', id: 50170, revenue: 3091.82, units: 663, avgPrice: 4.67, pct: 2.4, category: 'snacks' },
+                    { rank: 7, name: 'Mini Tacos', id: 50192, revenue: 2767.22, units: 645, avgPrice: 4.29, pct: 2.2, category: 'mexican' },
+                    { rank: 8, name: 'Jalapeno Saus on a Stick', id: 50175, revenue: 2680.31, units: 507, avgPrice: 5.29, pct: 2.1, category: 'snacks' },
+                    { rank: 9, name: 'Saus Egg Cheese Biscuit', id: 50165, revenue: 2539.11, units: 492, avgPrice: 5.16, pct: 2.0, category: 'breakfast' },
+                    { rank: 10, name: 'Cheeseburger', id: 50146, revenue: 2091.38, units: 425, avgPrice: 4.92, pct: 1.6, category: 'sandwiches' },
+                    { rank: 11, name: 'Sausage on a Stick', id: 50174, revenue: 1821.65, units: 471, avgPrice: 3.87, pct: 1.4, category: 'snacks' },
+                    { rank: 12, name: 'Pepperoni Pizza Burrito', id: 83403, revenue: 1583.51, units: 385, avgPrice: 4.11, pct: 1.2, category: 'mexican' },
+                    { rank: 13, name: 'Potato Wedges', id: 50148, revenue: 1502.29, units: 436, avgPrice: 3.45, pct: 1.2, category: 'snacks' },
+                    { rank: 14, name: 'Corn Dog', id: 50147, revenue: 1481.73, units: 519, avgPrice: 2.85, pct: 1.2, category: 'sandwiches' },
+                    { rank: 15, name: 'Bacon Egg Cheese Croissant', id: 50396, revenue: 1344.68, units: 270, avgPrice: 4.98, pct: 1.1, category: 'breakfast' },
+                    { rank: 16, name: 'Jalapeno Corn Dog', id: 50190, revenue: 1356.49, units: 474, avgPrice: 2.86, pct: 1.1, category: 'sandwiches' },
+                    { rank: 17, name: 'Saus Biscuit', id: 50201, revenue: 1355.30, units: 467, avgPrice: 2.90, pct: 1.1, category: 'breakfast' },
+                    { rank: 18, name: 'Cheese Curds', id: 52043, revenue: 1199.51, units: 304, avgPrice: 3.94, pct: 0.9, category: 'snacks' },
+                    { rank: 19, name: 'Saus Croissant', id: 50204, revenue: 1129.04, units: 382, avgPrice: 2.96, pct: 0.9, category: 'breakfast' },
+                    { rank: 20, name: 'Saus Egg Cheese Sandwich', id: 50420, revenue: 1076.62, units: 180, avgPrice: 5.98, pct: 0.8, category: 'sandwiches' }
+                ]
+            },
+            February: {
+                revenue: 33949.70,
+                units: 9102,
+                transactions: 76,
+                products: [
+                    { rank: 1, name: 'Beef Bean Red Chili Burrito', id: 50166, revenue: 13820.15, units: 4950, avgPrice: 2.79, pct: 10.8, category: 'mexican' },
+                    { rank: 2, name: 'Chicken Cheese Flautas', id: 50199, revenue: 9420.28, units: 2375, avgPrice: 3.97, pct: 7.4, category: 'mexican' },
+                    { rank: 3, name: 'Beef Chimichanga', id: 50167, revenue: 5050.14, units: 1286, avgPrice: 3.93, pct: 3.9, category: 'mexican' },
+                    { rank: 4, name: 'Saus Egg Cheese Croissant', id: 50203, revenue: 4525.63, units: 920, avgPrice: 4.92, pct: 3.5, category: 'breakfast' },
+                    { rank: 5, name: 'Honestly Chicken Bites', id: 50171, revenue: 4145.72, units: 795, avgPrice: 5.21, pct: 3.2, category: 'snacks' },
+                    { rank: 6, name: 'Spicy Chicken Bites', id: 50170, revenue: 2980.45, units: 638, avgPrice: 4.67, pct: 2.3, category: 'snacks' },
+                    { rank: 7, name: 'Mini Tacos', id: 50192, revenue: 2670.18, units: 623, avgPrice: 4.28, pct: 2.1, category: 'mexican' },
+                    { rank: 8, name: 'Jalapeno Saus on a Stick', id: 50175, revenue: 2580.24, units: 488, avgPrice: 5.29, pct: 2.0, category: 'snacks' },
+                    { rank: 9, name: 'Saus Egg Cheese Biscuit', id: 50165, revenue: 2445.38, units: 474, avgPrice: 5.16, pct: 1.9, category: 'breakfast' },
+                    { rank: 10, name: 'Cheeseburger', id: 50146, revenue: 2015.82, units: 409, avgPrice: 4.92, pct: 1.5, category: 'sandwiches' },
+                    { rank: 11, name: 'Sausage on a Stick', id: 50174, revenue: 1758.94, units: 454, avgPrice: 3.87, pct: 1.4, category: 'snacks' },
+                    { rank: 12, name: 'Pepperoni Pizza Burrito', id: 83403, revenue: 1526.29, units: 371, avgPrice: 4.11, pct: 1.2, category: 'mexican' },
+                    { rank: 13, name: 'Potato Wedges', id: 50148, revenue: 1449.21, units: 420, avgPrice: 3.45, pct: 1.1, category: 'snacks' },
+                    { rank: 14, name: 'Corn Dog', id: 50147, revenue: 1428.47, units: 501, avgPrice: 2.85, pct: 1.1, category: 'sandwiches' },
+                    { rank: 15, name: 'Bacon Egg Cheese Croissant', id: 50396, revenue: 1297.31, units: 260, avgPrice: 4.99, pct: 1.0, category: 'breakfast' },
+                    { rank: 16, name: 'Jalapeno Corn Dog', id: 50190, revenue: 1308.76, units: 457, avgPrice: 2.86, pct: 1.0, category: 'sandwiches' },
+                    { rank: 17, name: 'Saus Biscuit', id: 50201, revenue: 1307.12, units: 450, avgPrice: 2.90, pct: 1.0, category: 'breakfast' },
+                    { rank: 18, name: 'Cheese Curds', id: 52043, revenue: 1156.56, units: 293, avgPrice: 3.95, pct: 0.9, category: 'snacks' },
+                    { rank: 19, name: 'Saus Croissant', id: 50204, revenue: 1089.56, units: 368, avgPrice: 2.96, pct: 0.8, category: 'breakfast' },
+                    { rank: 20, name: 'Saus Egg Cheese Sandwich', id: 50420, revenue: 1038.34, units: 173, avgPrice: 6.00, pct: 0.8, category: 'sandwiches' }
+                ]
+            },
+            March: {
+                revenue: 38617.49,
+                units: 9922,
+                transactions: 76,
+                products: [
+                    { rank: 1, name: 'Beef Bean Red Chili Burrito', id: 50166, revenue: 15950.18, units: 5720, avgPrice: 2.79, pct: 12.4, category: 'mexican' },
+                    { rank: 2, name: 'Chicken Cheese Flautas', id: 50199, revenue: 10824.35, units: 2729, avgPrice: 3.97, pct: 8.4, category: 'mexican' },
+                    { rank: 3, name: 'Beef Chimichanga', id: 50167, revenue: 5625.84, units: 1432, avgPrice: 3.93, pct: 4.4, category: 'mexican' },
+                    { rank: 4, name: 'Saus Egg Cheese Croissant', id: 50203, revenue: 5045.72, units: 1026, avgPrice: 4.92, pct: 3.9, category: 'breakfast' },
+                    { rank: 5, name: 'Honestly Chicken Bites', id: 50171, revenue: 4598.95, units: 882, avgPrice: 5.21, pct: 3.6, category: 'snacks' },
+                    { rank: 6, name: 'Spicy Chicken Bites', id: 50170, revenue: 3316.45, units: 709, avgPrice: 4.68, pct: 2.6, category: 'snacks' },
+                    { rank: 7, name: 'Mini Tacos', id: 50192, revenue: 2968.29, units: 693, avgPrice: 4.28, pct: 2.3, category: 'mexican' },
+                    { rank: 8, name: 'Jalapeno Saus on a Stick', id: 50175, revenue: 2865.18, units: 542, avgPrice: 5.29, pct: 2.2, category: 'snacks' },
+                    { rank: 9, name: 'Saus Egg Cheese Biscuit', id: 50165, revenue: 2715.35, units: 526, avgPrice: 5.16, pct: 2.1, category: 'breakfast' },
+                    { rank: 10, name: 'Cheeseburger', id: 50146, revenue: 2243.47, units: 456, avgPrice: 4.92, pct: 1.7, category: 'sandwiches' },
+                    { rank: 11, name: 'Sausage on a Stick', id: 50174, revenue: 1954.28, units: 505, avgPrice: 3.87, pct: 1.5, category: 'snacks' },
+                    { rank: 12, name: 'Pepperoni Pizza Burrito', id: 83403, revenue: 1698.56, units: 413, avgPrice: 4.11, pct: 1.3, category: 'mexican' },
+                    { rank: 13, name: 'Potato Wedges', id: 50148, revenue: 1612.84, units: 468, avgPrice: 3.45, pct: 1.2, category: 'snacks' },
+                    { rank: 14, name: 'Corn Dog', id: 50147, revenue: 1589.45, units: 558, avgPrice: 2.85, pct: 1.2, category: 'sandwiches' },
+                    { rank: 15, name: 'Bacon Egg Cheese Croissant', id: 50396, revenue: 1443.92, units: 290, avgPrice: 4.98, pct: 1.1, category: 'breakfast' },
+                    { rank: 16, name: 'Jalapeno Corn Dog', id: 50190, revenue: 1456.78, units: 510, avgPrice: 2.86, pct: 1.1, category: 'sandwiches' },
+                    { rank: 17, name: 'Saus Biscuit', id: 50201, revenue: 1454.63, units: 502, avgPrice: 2.90, pct: 1.1, category: 'breakfast' },
+                    { rank: 18, name: 'Cheese Curds', id: 52043, revenue: 1287.39, units: 327, avgPrice: 3.94, pct: 1.0, category: 'snacks' },
+                    { rank: 19, name: 'Saus Croissant', id: 50204, revenue: 1212.84, units: 410, avgPrice: 2.96, pct: 0.9, category: 'breakfast' },
+                    { rank: 20, name: 'Saus Egg Cheese Sandwich', id: 50420, revenue: 1156.28, units: 193, avgPrice: 5.99, pct: 0.9, category: 'sandwiches' }
+                ]
+            }
+        };
+
+        // State
+        let currentMonth = 'January';
+        let currentCategory = 'all';
+        let chartInstances = {};
+
+        // Category colors
+        const categoryColors = {
+            'all': ['#E94560', '#2EC4B6', '#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3', '#F38181', '#AA96DA', '#FCBAD3', '#A8DADC'],
+            'breakfast': ['#F39C12', '#E67E22', '#D35400', '#E8B71B', '#F1A104'],
+            'mexican': ['#E74C3C', '#C0392B', '#D32F2F', '#E53935', '#C62828'],
+            'snacks': ['#2ECC71', '#27AE60', '#16A085', '#1ABC9C', '#3498DB'],
+            'sandwiches': ['#9B59B6', '#8E44AD', '#AF7AC5', '#D7BDE2', '#C39BD3']
+        };
+
+        // =====================================================
+        // INITIALIZATION
+        // =====================================================
+        function initialize() {
+            updateKPIs();
+            initializeCharts();
+            populateTable();
+            animateCards();
+        }
+
+        // =====================================================
+        // FILTER FUNCTIONS
+        // =====================================================
+        function filterByMonth(month) {
+            currentMonth = month;
+            document.querySelectorAll('.control-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.includes(month)) {
+                    btn.classList.add('active');
+                }
+            });
+            currentCategory = 'all';
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.includes('All')) {
+                    btn.classList.add('active');
+                }
+            });
+            updateKPIs();
+            initializeCharts();
+            populateTable();
+        }
+
+        function filterByCategory(category) {
+            currentCategory = category;
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.toLowerCase().includes(category === 'all' ? 'all' : category)) {
+                    btn.classList.add('active');
+                }
+            });
+            updateKPIs();
+            initializeCharts();
+            populateTable();
+        }
+
+        // =====================================================
+        // DATA FILTERING
+        // =====================================================
+        function getFilteredProducts() {
+            let products = allProductsData[currentMonth].products;
+            if (currentCategory !== 'all') {
+                products = products.filter(p => p.category === currentCategory);
+            }
+            return products;
+        }
+
+        function getMonthlyData() {
+            return [
+                { month: 'January', revenue: 34722.30, units: 9273, transactions: 73 },
+                { month: 'February', revenue: 33949.70, units: 9102, transactions: 76 },
+                { month: 'March', revenue: 38617.49, units: 9922, transactions: 76 }
+            ];
+        }
+
+        function getCategoryStats() {
+            const products = getFilteredProducts();
+            const categoryStats = {};
+            
+            products.forEach(p => {
+                if (!categoryStats[p.category]) {
+                    categoryStats[p.category] = { revenue: 0, units: 0, count: 0 };
+                }
+                categoryStats[p.category].revenue += p.revenue;
+                categoryStats[p.category].units += p.units;
+                categoryStats[p.category].count += 1;
+            });
+
+            return categoryStats;
+        }
+
+        // =====================================================
+        // KPI UPDATES
+        // =====================================================
+        function updateKPIs() {
+            const data = allProductsData[currentMonth];
+            const products = getFilteredProducts();
+
+            let totalRevenue = 0, totalUnits = 0, totalTransactions = data.transactions;
+            products.forEach(p => {
+                totalRevenue += p.revenue;
+                totalUnits += p.units;
+            });
+
+            const avgValue = totalTransactions > 0 ? (totalRevenue / totalTransactions) : 0;
+
+            document.getElementById('totalRevenue').textContent = '$' + totalRevenue.toLocaleString('en-US', { maximumFractionDigits: 0 });
+            document.getElementById('totalUnits').textContent = totalUnits.toLocaleString();
+            document.getElementById('totalTransactions').textContent = totalTransactions;
+            document.getElementById('avgValue').textContent = '$' + avgValue.toFixed(2);
+
+            // Calculate changes (comparing to previous month)
+            const monthIndex = Object.keys(allProductsData).indexOf(currentMonth);
+            const prevMonthKey = monthIndex > 0 ? Object.keys(allProductsData)[monthIndex - 1] : null;
+
+            if (prevMonthKey) {
+                const prevData = allProductsData[prevMonthKey];
+                const prevRevenue = prevData.products.reduce((sum, p) => sum + p.revenue, 0);
+                const prevUnits = prevData.products.reduce((sum, p) => sum + p.units, 0);
+                const prevAvg = prevData.transactions > 0 ? (prevRevenue / prevData.transactions) : 0;
+
+                const revenueChange = ((totalRevenue - prevRevenue) / prevRevenue * 100).toFixed(1);
+                const unitsChange = ((totalUnits - prevUnits) / prevUnits * 100).toFixed(1);
+                const valueChange = ((avgValue - prevAvg) / prevAvg * 100).toFixed(1);
+
+                document.getElementById('revenueChange').textContent = (revenueChange > 0 ? '↑' : '↓') + ' ' + Math.abs(revenueChange) + '%';
+                document.getElementById('revenueChange').className = 'kpi-card-change' + (revenueChange < 0 ? ' negative' : '');
+                
+                document.getElementById('unitsChange').textContent = (unitsChange > 0 ? '↑' : '↓') + ' ' + Math.abs(unitsChange) + '%';
+                document.getElementById('unitsChange').className = 'kpi-card-change' + (unitsChange < 0 ? ' negative' : '');
+                
+                document.getElementById('valueChange').textContent = (valueChange > 0 ? '↑' : '↓') + ' ' + Math.abs(valueChange) + '%';
+                document.getElementById('valueChange').className = 'kpi-card-change' + (valueChange < 0 ? ' negative' : '');
+            }
+        }
+
+        // =====================================================
+        // CHART FUNCTIONS
+        // =====================================================
+        function initializeCharts() {
+            createRevenueChart();
+            createCategoryChart();
+            createCorrelationChart();
+            createDistributionChart();
+        }
+
+        function createRevenueChart() {
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            
+            if (chartInstances.revenue) {
+                chartInstances.revenue.destroy();
+            }
+
+            const monthlyData = getMonthlyData();
+
+            chartInstances.revenue = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: monthlyData.map(m => m.month),
+                    datasets: [{
+                        label: 'Monthly Revenue',
+                        data: monthlyData.map(m => m.revenue),
+                        borderColor: '#E94560',
+                        backgroundColor: 'rgba(233, 69, 96, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#E94560',
+                        pointBorderColor: 'white',
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: v => '$' + (v / 1000).toFixed(0) + 'K',
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                font: { family: 'Inter' }
+                            },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        x: {
+                            ticks: {
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                font: { family: 'Inter' }
+                            },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createCategoryChart() {
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            
+            if (chartInstances.category) {
+                chartInstances.category.destroy();
+            }
+
+            const categoryStats = getCategoryStats();
+            const labels = Object.keys(categoryStats);
+            const data = labels.map(cat => categoryStats[cat].revenue);
+
+            chartInstances.category = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
+                    datasets: [{
+                        data: data,
+                        backgroundColor: categoryColors[currentCategory] || categoryColors['all'],
+                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: 'rgba(255, 255, 255, 0.7)', font: { family: 'Inter' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createCorrelationChart() {
+            const ctx = document.getElementById('correlationChart').getContext('2d');
+            
+            if (chartInstances.correlation) {
+                chartInstances.correlation.destroy();
+            }
+
+            const monthlyData = getMonthlyData();
+
+            chartInstances.correlation = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: monthlyData.map(m => m.month),
+                    datasets: [
+                        {
+                            label: 'Revenue ($K)',
+                            data: monthlyData.map(m => m.revenue / 1000),
+                            backgroundColor: 'rgba(233, 69, 96, 0.7)',
+                            borderColor: '#E94560',
+                            borderWidth: 1,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Units (x100)',
+                            data: monthlyData.map(m => m.units / 100),
+                            backgroundColor: 'rgba(46, 196, 182, 0.7)',
+                            borderColor: '#2EC4B6',
+                            borderWidth: 1,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { 
+                            position: 'top',
+                            labels: { color: 'rgba(255, 255, 255, 0.7)', font: { family: 'Inter' } }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            ticks: { 
+                                callback: v => '$' + v + 'K',
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                font: { family: 'Inter' }
+                            },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            ticks: {
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                font: { family: 'Inter' }
+                            },
+                            grid: { drawOnChartArea: false }
+                        },
+                        x: {
+                            ticks: {
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                font: { family: 'Inter' }
+                            },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createDistributionChart() {
+            const ctx = document.getElementById('distributionChart').getContext('2d');
+            
+            if (chartInstances.distribution) {
+                chartInstances.distribution.destroy();
+            }
+
+            const topProducts = getFilteredProducts().slice(0, 10);
+
+            chartInstances.distribution = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: topProducts.map(p => p.name.substring(0, 15) + '...'),
+                    datasets: [{
+                        data: topProducts.map(p => p.pct),
+                        backgroundColor: categoryColors['all'],
+                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: 'rgba(255, 255, 255, 0.7)', font: { family: 'Inter' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // =====================================================
+        // TABLE FUNCTION
+        // =====================================================
+        function populateTable() {
+            const products = getFilteredProducts();
+            const tbody = document.getElementById('tableBody');
+            
+            tbody.innerHTML = products.map(p => {
+                let status = 'success';
+                let statusText = '✓ Stable';
+                if (p.pct > 5) {
+                    status = 'warning';
+                    statusText = '⚠ High';
+                } else if (p.revenue < 2000) {
+                    status = 'danger';
+                    statusText = '↓ Low';
+                }
+
+                return `
+                    <tr>
+                        <td><span class="table-rank">#${p.rank}</span></td>
+                        <td><strong>${p.name}</strong></td>
+                        <td><strong>${p.category.charAt(0).toUpperCase() + p.category.slice(1)}</strong></td>
+                        <td>${p.id}</td>
+                        <td><strong>$${p.revenue.toLocaleString('en-US', { maximumFractionDigits: 2 })}</strong></td>
+                        <td>${p.units.toLocaleString()}</td>
+                        <td>$${p.avgPrice.toFixed(2)}</td>
+                        <td><strong>${p.pct.toFixed(1)}%</strong></td>
+                        <td><span class="table-badge badge-${status}">${statusText}</span></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // =====================================================
+        // ANIMATIONS
+        // =====================================================
+        function animateCards() {
+            const cards = document.querySelectorAll('.kpi-card, .insight-card');
+            cards.forEach((card, index) => {
+                gsap.from(card, {
+                    opacity: 0,
+                    y: 30,
+                    duration: 0.6,
+                    delay: index * 0.1,
+                    ease: 'back.out'
+                });
+            });
+        }
+
+        // Initialize on load
+        window.addEventListener('load', initialize);
+    </script>
+</body>
+
+</html>
